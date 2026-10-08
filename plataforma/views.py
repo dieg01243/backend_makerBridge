@@ -1,7 +1,12 @@
 from django.http import JsonResponse
 from django.utils import timezone
 from .models import Usuario, Pedido, Cotizacion, Pago, LoginHistorial
+import json
+from django.views.decorators.csrf import csrf_exempt
 
+
+
+@csrf_exempt
 def register_user(request): #request basicamnete obtiene toda la información que el usuario envía al endpoint, ya sea por GET o POST
 #     ej:
 #     Ahí request puede contener:
