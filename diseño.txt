@@ -1,0 +1,150 @@
+POST   /api/auth/register/              → registrar nuevo usuario
+POST   /api/auth/login/                 → iniciar sesión / obtener token
+GET    /api/makers/                     → ver lista de makers públicos
+GET    /api/makers/{id}/                → ver detalle público de un maker
+PUT    /api/makers/me/profile/          → actualizar perfil del maker autenticado
+GET    /api/makers/me/printers/         → ver mis impresoras (Maker)
+POST   /api/makers/me/printers/         → agregar una impresora (Maker)
+
+
+=========================================================================
+BASE DE DATOS | ESTRUCTURA SQL
+
+-- ============================================================
+-- MakerBridge — Esquema de Base de Datos Relacional (v2)
+-- Motor: PostgreSQL
+-- Tablas: usuarios, pedidos, cotizaciones, login_historial, pagos
+-- ============================================================
+
+-- Limpieza (útil para re-ejecutar el script en desarrollo)
+DROP TABLE IF EXISTS pagos CASCADE;
+DROP TABLE IF EXISTS cotizaciones CASCADE;
+DROP TABLE IF EXISTS login_historial CASCADE;
+DROP TABLE IF EXISTS pedidos CASCADE;
+DROP TABLE IF EXISTS usuarios CASCADE;
+
+-- ============================================================
+-- 1. USUARIOS (clientes, makers y, opcionalmente, admins)
+-- ============================================================
+
+CREATE TABLE usuarios (
+    id_usuario      SERIAL PRIMARY KEY,
+    nombre          VARCHAR(150) NOT NULL,
+    email           VARCHAR(150) NOT NULL UNIQUE,
+    password_hash   VARCHAR(255) NOT NULL,          -- nunca guardar la contraseña en texto plano
+    rol             VARCHAR(10) NOT NULL CHECK (rol IN ('cliente', 'maker', 'admin')),
+    activo          BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_registro  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 2. PEDIDOS (creados por un usuario con rol 'cliente')
+-- ============================================================
+
+CREATE TABLE pedidos (
+    id_pedido       SERIAL PRIMARY KEY,
+    id_usuario      INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    descripcion     TEXT NOT NULL,
+    cantidad        INTEGER NOT NULL DEFAULT 1,
+    material        VARCHAR(50),
+    color           VARCHAR(50),
+    archivo_url     VARCHAR(300),                    -- STL o imagen de referencia
+    fecha_limite    DATE,
+    estado          VARCHAR(20) NOT NULL DEFAULT 'pendiente'
+                    CHECK (estado IN ('pendiente', 'cotizado', 'en_proceso', 'terminado', 'entregado', 'cancelado')),
+    fecha_creacion  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 3. COTIZACIONES (un maker cotiza un pedido)
+-- ============================================================
+
+CREATE TABLE cotizaciones (
+    id_cotizacion   SERIAL PRIMARY KEY,
+    id_pedido       INTEGER NOT NULL REFERENCES pedidos(id_pedido) ON DELETE CASCADE,
+    id_maker        INTEGER NOT NULL REFERENCES usuarios(id_usuario),
+    precio          DECIMAL(10,2) NOT NULL,
+    tiempo_estimado_dias INTEGER,
+    mensaje         TEXT,
+    estado          VARCHAR(12) NOT NULL DEFAULT 'pendiente'
+                    CHECK (estado IN ('pendiente', 'aceptada', 'rechazada')),
+    fecha_creacion  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (id_pedido, id_maker)   -- un maker cotiza una sola vez por pedido
+);
+
+-- ============================================================
+-- 4. LOGIN_HISTORIAL (auditoría de intentos de inicio de sesión)
+-- ============================================================
+
+CREATE TABLE login_historial (
+    id_historial    SERIAL PRIMARY KEY,
+    id_usuario      INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    fecha           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip              VARCHAR(45),                     -- soporta IPv4 e IPv6
+    exito           BOOLEAN NOT NULL
+);
+
+-- ============================================================
+-- 5. PAGOS (relacionado con una cotización aceptada)
+-- ============================================================
+
+CREATE TABLE pagos (
+    id_pago         SERIAL PRIMARY KEY,
+    id_cotizacion   INTEGER NOT NULL UNIQUE REFERENCES cotizaciones(id_cotizacion) ON DELETE CASCADE,
+    monto           DECIMAL(10,2) NOT NULL,
+    metodo_pago     VARCHAR(30) CHECK (metodo_pago IN ('tarjeta', 'transferencia', 'efectivo', 'mercado_pago')),
+    estado          VARCHAR(12) NOT NULL DEFAULT 'pendiente'
+                    CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'reembolsado')),
+    fecha_pago      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- ÍNDICES recomendados
+-- ============================================================
+
+CREATE INDEX idx_pedidos_usuario       ON pedidos(id_usuario);
+CREATE INDEX idx_pedidos_estado        ON pedidos(estado);
+CREATE INDEX idx_cotizaciones_pedido   ON cotizaciones(id_pedido);
+CREATE INDEX idx_cotizaciones_maker    ON cotizaciones(id_maker);
+CREATE INDEX idx_login_historial_user  ON login_historial(id_usuario);
+CREATE INDEX idx_pagos_cotizacion      ON pagos(id_cotizacion);
+
+-- ============================================================
+-- DATOS DE PRUEBA (SEED)
+-- Nota: los password_hash de ejemplo son strings falsos para prueba;
+-- en la app real se generan con bcrypt y nunca se guardan en texto plano.
+-- ============================================================
+
+INSERT INTO usuarios (nombre, email, password_hash, rol, activo) VALUES
+    ('Lucía Fernández',  'lucia.fernandez@example.com',  '$2b$10$seedhash0001', 'cliente', TRUE),
+    ('Martín Gómez',     'martin.gomez@example.com',     '$2b$10$seedhash0002', 'cliente', TRUE),
+    ('Taller Nexo3D',    'contacto@nexo3d.example.com',  '$2b$10$seedhash0003', 'maker',   TRUE),
+    ('Impresiones Sur',  'ventas@impresionessur.example.com', '$2b$10$seedhash0004', 'maker', TRUE),
+    ('Admin Sistema',    'admin@makerbridge.example.com','$2b$10$seedhash0005', 'admin',   TRUE);
+
+-- usuarios: 1=Lucía (cliente), 2=Martín (cliente), 3=Nexo3D (maker), 4=Impresiones Sur (maker), 5=Admin
+
+INSERT INTO pedidos (id_usuario, descripcion, cantidad, material, color, archivo_url, fecha_limite, estado) VALUES
+    (1, 'Soporte para auriculares, diseño propio adjunto',        1, 'PLA',   'Negro',  'https://ejemplo.com/archivos/soporte.stl', '2026-10-20', 'cotizado'),
+    (1, 'Maceta geométrica mediana',                              3, 'PETG',  'Blanco', NULL,                                        '2026-10-25', 'pendiente'),
+    (2, 'Engranaje de repuesto para impresora de filamento',      2, 'ABS',   'Gris',   'https://ejemplo.com/archivos/engranaje.stl','2026-10-15', 'en_proceso');
+
+-- pedidos: 1=soporte auriculares (Lucía), 2=maceta (Lucía), 3=engranaje (Martín)
+
+INSERT INTO cotizaciones (id_pedido, id_maker, precio, tiempo_estimado_dias, mensaje, estado) VALUES
+    (1, 3, 3500.00, 3, 'Lo podemos tener listo en 3 días, PLA negro mate.',           'aceptada'),
+    (1, 4, 4200.00, 2, 'Entrega más rápida, acabado premium.',                        'rechazada'),
+    (3, 3, 2800.00, 4, 'Engranaje reforzado en ABS, probado a resistencia.',          'aceptada');
+
+-- cotizaciones: 1=Nexo3D sobre pedido 1 (aceptada), 2=Impresiones Sur sobre pedido 1 (rechazada), 3=Nexo3D sobre pedido 3 (aceptada)
+
+INSERT INTO login_historial (id_usuario, ip, exito) VALUES
+    (1, '190.191.12.45', TRUE),
+    (1, '190.191.12.45', TRUE),
+    (3, '201.222.5.10',  TRUE),
+    (2, '186.10.44.2',   FALSE),
+    (2, '186.10.44.2',   TRUE);
+
+INSERT INTO pagos (id_cotizacion, monto, metodo_pago, estado) VALUES
+    (1, 3500.00, 'mercado_pago', 'aprobado'),
+    (3, 2800.00, 'transferencia', 'pendiente');
