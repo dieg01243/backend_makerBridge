@@ -337,3 +337,32 @@ def comprar_producto(request, id_producto):
         "monto_total": str(compra.monto_total),
         "estado": compra.estado
     }, status=201)
+
+#============================
+@csrf_exempt
+def ver_compras(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    # Obtener el ID del usuario desde la sesión
+    id_usuario = request.session.get("id_usuario")
+
+    if id_usuario is None:
+        return JsonResponse({"error": "Debes iniciar sesión"}, status=401)
+
+    # Filtrar las compras por el ID del usuario
+    compras = Compra.objects.filter(id_usuario=id_usuario)
+    lista_compras = []
+
+    for compra in compras:
+        lista_compras.append({
+            "id_compra": compra.id_compra,
+            "id_producto": compra.id_producto.id_producto,
+            "nombre_producto": compra.id_producto.nombre,
+            "cantidad": compra.cantidad,
+            "precio_unitario": str(compra.precio_unitario),
+            "monto_total": str(compra.monto_total),
+            "estado": compra.estado,
+        })
+
+    return JsonResponse({"compras": lista_compras}, status=200)
