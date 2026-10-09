@@ -1,8 +1,8 @@
 Cliente ==========================================
 
-Explorar productos: ver el catálogo publicado por todos los makers.
+xxxxxxxxxxxxxxExplorar productos: ver el catálogo publicado por todos los makers. 
 
-Ver un producto: consultar su descripción, precio, material e imagen.
+xxxxxxxxxxxxxxVer un producto: consultar su descripción, precio, material e imagen.
 
 Comprar un producto: generar una compra.
 

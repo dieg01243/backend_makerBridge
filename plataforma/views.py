@@ -123,4 +123,28 @@ def ver_lista_de_productos(request):
 
     #se envia una lista de objetos JSON con todos los productos
     return JsonResponse({"productos": lista_productos}, status=200)
+
+#=============================
+#cuando tocan un producto de interes y les mostrara el detalle del producto
+def ver_producto(request, id_producto):
+    if request.method != "GET":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    #buscar el producto por id
+    producto = Producto.objects.filter(id_producto=id_producto).first()
+
+    if producto is None:
+        return JsonResponse({"error": "Producto no encontrado"}, status=404)
+
+    #si lo encuentra, se envia la info del producto
+    detalle_producto = {
+        "id_producto": producto.id_producto,
+        "nombre": producto.nombre,
+        "descripcion": producto.descripcion,
+        "precio": str(producto.precio),  # Convertir Decimal a string
+        "imagen_url": producto.imagen_url,
+    }
+
+    return JsonResponse({"producto": detalle_producto}, status=200)
+
     

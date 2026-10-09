@@ -15,4 +15,5 @@ urlpatterns = [
     path("auth/register/", views.register_user, name="register_user"),
     path("auth/login/", views.login_user, name="login_user"),
     path("productos/", views.ver_lista_de_productos, name="ver_lista_de_productos"),
+    path("productos/<int:id_producto>/", views.ver_producto, name="ver_producto")
 ]
