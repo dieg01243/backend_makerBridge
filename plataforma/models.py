@@ -142,3 +142,30 @@ class Pago(models.Model):
         managed = False
         db_table = "pagos"
         app_label = "plataforma"
+
+
+class Producto(models.Model):
+    id_producto = models.AutoField(primary_key=True, db_column="id_producto")
+
+    id_maker = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        db_column="id_maker",
+        related_name="productos",
+    )
+
+    nombre = models.CharField(max_length=150)
+    descripcion = models.TextField(null=True, blank=True)
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    material = models.CharField(max_length=50, null=True, blank=True)
+    color = models.CharField(max_length=50, null=True, blank=True)
+    imagen_url = models.CharField(max_length=500, null=True, blank=True)
+    archivo_url = models.CharField(max_length=500, null=True, blank=True)
+    stock = models.IntegerField(default=0)
+    activo = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        managed = False
+        db_table = "productos"
+        app_label = "plataforma"
