@@ -103,6 +103,13 @@ def login_user(request):
     #==============================================
 
 
+
+#===========================================================================
+#==========================CLIENTE==========================================
+#===========================================================================
+
+
+
 #==============================
 
 def ver_lista_de_productos(request):
@@ -147,4 +154,39 @@ def ver_producto(request, id_producto):
 
     return JsonResponse({"producto": detalle_producto}, status=200)
 
-    
+#crear pedido POST
+def crear_pedido(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    #datos del pedido | 
+    datos = json.loads(request.body)
+
+    id_usuario = datos["id_usuario"]
+    descripcion = datos["descripcion"]
+    cantidad = datos["cantidad"]
+    material = datos["material"]   
+    color = datos["color"]
+    archivo_3d_url = datos["archivo_3d_url"]
+    fecha_limite = datos["fecha_limite"]
+    estado = "pendiente"  # Estado inicial del pedido
+    fecha_pedido = timezone.now()
+
+    #creacion del objeto e ingreso de datos a la talba de pedidos
+    pedido = Pedido.objects.create(
+        id_usuario=id_usuario,
+        descripcion=descripcion,
+        cantidad=cantidad,
+        material=material,
+        color=color,
+        archivo_3d_url=archivo_3d_url,
+        fecha_limite=fecha_limite,
+        estado=estado,
+        fecha_pedido=fecha_pedido
+    )
+    return JsonResponse({
+        "mensaje": "Pedido creado",
+        "id_pedido": pedido.id_pedido
+    }, status=201)
+
+
