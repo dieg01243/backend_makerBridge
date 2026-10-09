@@ -12,7 +12,7 @@ xxxxxxxxxxxxx Ver mis pedidos: consultar las solicitudes personalizadas que cre�
 
 Ver mis compras: consultar el historial de productos comprados.
 
-- Gestionar cotizaciones: revisar una cotización y aceptarla o rechazarla.
+xxxxxxxxxxxx Gestionar cotizaciones: revisar una cotización y aceptarla o rechazarla. // ver cotizaciones
 
 Maker ===============================================
 

@@ -219,6 +219,37 @@ def ver_lista_de_pedidos(request):
             "fecha_pedido": pedido.fecha_pedido,
         })
 
+    
+
     return JsonResponse({"pedidos": lista_pedidos}, status=200)
 
+#ver lista de pedidos cotizados GET
+def ver_lista_de_pedidos_cotizados(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
 
+    #obtener el id del usuario desde los parámetros de la URL
+    id_usuario = request.GET.get("id_usuario")
+
+    #verificar si se proporcionó el id del usuario
+    if not id_usuario:
+        return JsonResponse({"error": "Se requiere el id del usuario"}, status=400)
+
+    #filtrar los pedidos por el id del usuario y estado "cotizado"
+    pedidos_cotizados = Pedido.objects.filter(id_usuario=id_usuario, estado="cotizado")
+    lista_pedidos_cotizados = []
+
+    for pedido in pedidos_cotizados:
+        lista_pedidos_cotizados.append({
+            "id_pedido": pedido.id_pedido,
+            "descripcion": pedido.descripcion,
+            "cantidad": pedido.cantidad,
+            "material": pedido.material,
+            "color": pedido.color,
+            "archivo_3d_url": pedido.archivo_3d_url,
+            "fecha_limite": pedido.fecha_limite,
+            "estado": pedido.estado,
+            "fecha_pedido": pedido.fecha_pedido,
+        })
+
+    return JsonResponse({"pedidos_cotizados": lista_pedidos_cotizados}, status=200)
