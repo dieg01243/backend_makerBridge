@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.utils import timezone
-from .models import Usuario, Pedido, Cotizacion, Pago, LoginHistorial
+from .models import Producto, Usuario, Pedido, Cotizacion, Pago, LoginHistorial
 import json
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.response import Response
@@ -103,3 +103,24 @@ def login_user(request):
     #==============================================
 
 
+#==============================
+
+def ver_lista_de_productos(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    productos = Producto.objects.all()
+    lista_productos = []
+
+    for producto in productos:
+        lista_productos.append({
+            "id_producto": producto.id_producto,
+            "nombre": producto.nombre,
+            "descripcion": producto.descripcion,
+            "precio": str(producto.precio),  # Convertir Decimal a string
+            "imagen_url": producto.imagen_url,
+        })
+
+    #se envia una lista de objetos JSON con todos los productos
+    return JsonResponse({"productos": lista_productos}, status=200)
+    

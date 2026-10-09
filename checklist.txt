@@ -1,0 +1,29 @@
+Cliente ==========================================
+
+Explorar productos: ver el catálogo publicado por todos los makers.
+
+Ver un producto: consultar su descripción, precio, material e imagen.
+
+Comprar un producto: generar una compra.
+
+Crear un pedido personalizado: completar un formulario y elegir el maker al que se dirige.
+
+Ver mis pedidos: consultar las solicitudes personalizadas que creó.
+
+Ver mis compras: consultar el historial de productos comprados.
+
+Gestionar cotizaciones: revisar una cotización y aceptarla o rechazarla.
+
+Maker ===============================================
+
+Publicar productos: cargar productos para vender.
+
+Administrar mis productos: ver, editar y desactivar sus publicaciones.
+
+Ver pedidos: consultar las lista de pedido de diferentes clientes
+
+Cotizar un pedido: proponer precio y plazo.
+
+Ver mis ventas: consultar las compras de sus productos.
+
+Consultar pagos: ver pagos recibidos y, más adelante, el saldo disponible.
