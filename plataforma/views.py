@@ -3,6 +3,8 @@ from django.utils import timezone
 from .models import Usuario, Pedido, Cotizacion, Pago, LoginHistorial
 import json
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.response import Response
+from rest_framework import status
 
 
 
@@ -55,6 +57,49 @@ def register_user(request): #request basicamnete obtiene toda la información qu
         "id_usuario": usuario.id_usuario
     }, status=201)
 
+def login_user(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
 
+    datos = json.loads(request.body)
+
+    email = datos["email"]
+    password = datos["password"]
+
+    #con ORM verifica si existe ese mail en la talbla de usuarios
+    usuario = Usuario.objects.filter(email=email).first()
+
+    #si no encuentra al usuario
+    if usuario is None:
+        return Response(
+        {"error": "Usuario no encontrado"},
+        status=status.HTTP_404_NOT_FOUND
+        )
+    #si encuentra al usuario, verificamos la contraseña
+    if usuario.password_hash != password:
+        return Response(
+        {"error": "Contraseña incorrecta"},
+        status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    #se verifico al usuario y ahora se separan los roles
+    if usuario.rol == "maker":
+        return Response(
+            {"mensaje": "Login exitoso", "rol": "maker", "id_usuario": usuario.id_usuario},
+            status=status.HTTP_200_OK,
+        )
+
+    elif usuario.rol == "cliente":
+        return Response(
+            {"mensaje": "Login exitoso", "rol": "cliente", "id_usuario": usuario.id_usuario},
+            status=status.HTTP_200_OK,
+        )
+
+    #========esto no deberia pasar jajaj===========
+    return Response(
+        {"error": "Rol no permitido"},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+    #==============================================
 
 
