@@ -190,3 +190,35 @@ def crear_pedido(request):
     }, status=201)
 
 
+#ver lista de pedidos GET //me enviaria los datos del usuario y lo filtro en la tabla pedidos
+def ver_lista_de_pedidos(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    #obtener el id del usuario desde los parámetros de la URL
+    id_usuario = request.GET.get("id_usuario")
+
+    #verificar si se proporcionó el id del usuario
+    if not id_usuario:
+        return JsonResponse({"error": "Se requiere el id del usuario"}, status=400)
+
+    #filtrar los pedidos por el id del usuario
+    pedidos = Pedido.objects.filter(id_usuario=id_usuario)
+    lista_pedidos = []
+
+    for pedido in pedidos:
+        lista_pedidos.append({
+            "id_pedido": pedido.id_pedido,
+            "descripcion": pedido.descripcion,
+            "cantidad": pedido.cantidad,
+            "material": pedido.material,
+            "color": pedido.color,
+            "archivo_3d_url": pedido.archivo_3d_url,
+            "fecha_limite": pedido.fecha_limite,
+            "estado": pedido.estado,
+            "fecha_pedido": pedido.fecha_pedido,
+        })
+
+    return JsonResponse({"pedidos": lista_pedidos}, status=200)
+
+

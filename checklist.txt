@@ -6,13 +6,13 @@ xxxxxxxxxxxxxxVer un producto: consultar su descripción, precio, material e ima
 
 Comprar un producto: generar una compra.
 
-Crear un pedido personalizado: completar un formulario y elegir el maker al que se dirige.
+xxxxxxxxxxxxx Crear un pedido personalizado: completar un formulario 
 
-Ver mis pedidos: consultar las solicitudes personalizadas que creó.
+xxxxxxxxxxxxx Ver mis pedidos: consultar las solicitudes personalizadas que creó.
 
 Ver mis compras: consultar el historial de productos comprados.
 
-Gestionar cotizaciones: revisar una cotización y aceptarla o rechazarla.
+- Gestionar cotizaciones: revisar una cotización y aceptarla o rechazarla.
 
 Maker ===============================================
 
