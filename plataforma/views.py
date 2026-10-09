@@ -1,6 +1,6 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, request
 from django.utils import timezone
-from .models import Producto, Usuario, Pedido, Cotizacion, Pago, LoginHistorial
+from .models import Compra, Producto, Usuario, Pedido, Cotizacion, Pago, LoginHistorial
 import json
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.response import Response
@@ -57,6 +57,8 @@ def register_user(request): #request basicamnete obtiene toda la información qu
         "id_usuario": usuario.id_usuario
     }, status=201)
 
+
+@csrf_exempt
 def login_user(request):
     if request.method != "POST":
         return JsonResponse({"error": "Método no permitido"}, status=405)
@@ -81,7 +83,12 @@ def login_user(request):
         {"error": "Contraseña incorrecta"},
         status=status.HTTP_401_UNAUTHORIZED
         )
-
+    
+    #=========COKIES===========
+    request.session["id_usuario"] = usuario.id_usuario
+    request.session["rol"] = usuario.rol
+    #==========================
+    
     #se verifico al usuario y ahora se separan los roles
     if usuario.rol == "maker":
         return Response(
@@ -111,7 +118,7 @@ def login_user(request):
 
 
 #==============================
-
+@csrf_exempt
 def ver_lista_de_productos(request):
     if request.method != "GET":
         return JsonResponse({"error": "Método no permitido"}, status=405)
@@ -133,6 +140,7 @@ def ver_lista_de_productos(request):
 
 #=============================
 #cuando tocan un producto de interes y les mostrara el detalle del producto
+@csrf_exempt
 def ver_producto(request, id_producto):
     if request.method != "GET":
         return JsonResponse({"error": "Método no permitido"}, status=405)
@@ -155,6 +163,7 @@ def ver_producto(request, id_producto):
     return JsonResponse({"producto": detalle_producto}, status=200)
 
 #crear pedido POST
+@csrf_exempt
 def crear_pedido(request):
     if request.method != "POST":
         return JsonResponse({"error": "Método no permitido"}, status=405)
@@ -191,6 +200,7 @@ def crear_pedido(request):
 
 
 #ver lista de pedidos GET //me enviaria los datos del usuario y lo filtro en la tabla pedidos
+@csrf_exempt
 def ver_lista_de_pedidos(request):
     if request.method != "GET":
         return JsonResponse({"error": "Método no permitido"}, status=405)
@@ -224,6 +234,7 @@ def ver_lista_de_pedidos(request):
     return JsonResponse({"pedidos": lista_pedidos}, status=200)
 
 #ver lista de pedidos cotizados GET
+@csrf_exempt
 def ver_lista_de_pedidos_cotizados(request):
     if request.method != "GET":
         return JsonResponse({"error": "Método no permitido"}, status=405)
@@ -253,3 +264,76 @@ def ver_lista_de_pedidos_cotizados(request):
         })
 
     return JsonResponse({"pedidos_cotizados": lista_pedidos_cotizados}, status=200)
+
+#comprar producto // nos llega los datos del producto
+
+@csrf_exempt
+def comprar_producto(request, id_producto):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Método no permitido"}, status=405
+        )
+
+    # 1. Obtener el ID del usuario desde la sesión
+    id_usuario = request.session.get("id_usuario")
+
+    if id_usuario is None:
+        return JsonResponse(
+            {"error": "Debes iniciar sesión"}, status=401
+        )
+
+    # 2. Obtener los datos que envía React
+    try:
+        datos = json.loads(request.body)
+        cantidad = int(datos["cantidad"])
+
+        if cantidad <= 0:
+            return JsonResponse(
+                {"error": "La cantidad debe ser mayor a cero"},
+                status=400
+            )
+
+    except (json.JSONDecodeError, KeyError, ValueError, TypeError):
+        return JsonResponse(
+            {"error": "Datos inválidos"}, status=400
+        )
+
+    # 3. Buscar el producto en la base de datos
+    producto = Producto.objects.filter(
+        id_producto=id_producto,
+        activo=True
+    ).first()
+
+    if producto is None:
+        return JsonResponse(
+            {"error": "Producto no encontrado"}, status=404
+        )
+
+    # 4. Verificar el stock
+    if producto.stock < cantidad:
+        return JsonResponse(
+            {"error": "Stock insuficiente"}, status=400
+        )
+
+    # 5. Calcular el importe desde el precio de la base de datos
+    precio_unitario = producto.precio
+    monto_total = precio_unitario * cantidad
+
+    # 6. Registrar la compra
+    compra = Compra.objects.create(
+        id_usuario_id=id_usuario,
+        id_producto_id=producto.id_producto,
+        cantidad=cantidad,
+        precio_unitario=precio_unitario,
+        monto_total=monto_total,
+        estado="pendiente"
+    )
+
+    # 7. Responder a React
+    return JsonResponse({
+        "mensaje": "Compra registrada",
+        "id_compra": compra.id_compra,
+        "monto_total": str(compra.monto_total),
+        "estado": compra.estado
+    }, status=201)

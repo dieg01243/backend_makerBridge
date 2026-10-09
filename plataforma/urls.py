@@ -19,4 +19,5 @@ urlpatterns = [
     path("crear_pedido/", views.crear_pedido, name="crear_pedido"),
     path("pedidos/", views.ver_lista_de_pedidos, name="ver_lista_de_pedidos"),
     path("pedidos_cotizados/", views.ver_lista_de_pedidos_cotizados, name="ver_lista_de_pedidos_cotizados"),
+    path("comprar_producto/<int:id_producto>/", views.comprar_producto, name="comprar_producto"),
 ]

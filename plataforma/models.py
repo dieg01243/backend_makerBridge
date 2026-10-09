@@ -169,3 +169,44 @@ class Producto(models.Model):
         managed = False
         db_table = "productos"
         app_label = "plataforma"
+
+    
+class Compra(models.Model):
+    id_compra = models.AutoField(primary_key=True)
+
+    id_usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.PROTECT,
+        db_column="id_usuario",
+        related_name="compras"
+    )
+
+    id_producto = models.ForeignKey(
+        Producto,
+        on_delete=models.PROTECT,
+        db_column="id_producto",
+        related_name="compras"
+    )
+
+    cantidad = models.IntegerField(default=1)
+    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
+    monto_total = models.DecimalField(max_digits=12, decimal_places=2)
+
+    estado = models.CharField(
+        max_length=20,
+        default="pendiente",
+        choices=[
+            ("pendiente", "Pendiente"),
+            ("pagada", "Pagada"),
+            ("enviada", "Enviada"),
+            ("entregada", "Entregada"),
+            ("cancelada", "Cancelada"),
+        ]
+    )
+
+    fecha_compra = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "compras"
+        app_label = "plataforma"
