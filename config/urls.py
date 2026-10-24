@@ -17,10 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from api.views import hola
+from api.chatbot import chatbot
+from api.chatbot import chatbot, chatbot_demo
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/hola/", hola),
+    path("api/chatbot/", chatbot),
     path("pagos/", include("pagos.urls")),
     path("plataforma/", include("plataforma.urls")),
 ]
